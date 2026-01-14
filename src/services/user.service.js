@@ -6,6 +6,7 @@ const isEmailTaken = async (email) => {
   const checkEmail = await Users.findOne({ email: email });
   return !!checkEmail;
 };
+
 const isPasswordValidate = async (password) => {
   if (!password.match(/^.{8,}/))
     throw new Error("Password must contain at least minimum eight in length");
@@ -15,11 +16,7 @@ const isPasswordValidate = async (password) => {
     throw new Error(" Password must contain at least one special character");
 };
 
-/**
- * @description Create a user
- * @param {Object} userBody
- * @returns {Promise<User>} Object
- */
+
 const userRegisterServices = async (userBody) => {
   if (await isEmailTaken(userBody.email)) {
     throw new Error("users already exists with same email");
@@ -32,16 +29,31 @@ const userRegisterServices = async (userBody) => {
   return Users.create(userBody).then((user) => (user)).catch(err => err)
 };
 
-/**
- * @description Get user by email
- * @param {string} email
- * @returns {Promise<User>} Object
- */
+
 const getUserByEmail = async (email) => {
   const checkEmail = await Users.findOne({ email: email });
   return checkEmail
 }
+
+const getUserById = (userId) => {
+    return Users.findOne({ _id: userId });
+}
+
+const updateUserById = async (userId, updateBody) => {
+    const user = await getUserById(userId);
+    if (!user) {
+        throw new ApiError(httpStatus.NOT_FOUND, 'User not found');
+    }
+    if(updateBody.email && (await getUserByEmail(updateBody.email))){
+        throw new ApiError(httpStatus.BAD_REQUEST, 'Email already taken');  
+    }
+    Object.assign(user, updateBody);
+    await user.save();
+    return user
+}
 module.exports = {
   userRegisterServices,
-  getUserByEmail
+  getUserByEmail,
+  getUserById,
+  updateUserById
 };

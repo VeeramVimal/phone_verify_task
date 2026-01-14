@@ -1,69 +1,94 @@
 const { Schema, ObjectId, Modle } = require("../config/config");
 const { roles } = require("../config/roles");
 
-const userSchema = new Schema({
+const userSchema = new Schema(
+  {
     firstName: {
-        type: String,
-        required: true
+      type: String,
+      required: true,
     },
     lastName: {
-        type: String,
-        required: true      
+      type: String,
+      required: true,
     },
     email: {
-        type: String,
-        trim: true,
-        lowercase: true,
-        unique: true,
-        validate: {
-            validator: function (value) {
-                return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)
-            },
-            message: '{VALUE} is not a valid email!'
+      type: String,
+      trim: true,
+      lowercase: true,
+      unique: true,
+      validate: {
+        validator: function (value) {
+          return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
         },
-        required: [true, "Email required"],
-
+        message: "{VALUE} is not a valid email!",
+      },
+      required: [true, "Email required"],
     },
     password: {
-        type: String,
-        required: true,
-        trim: true,
-        minlength: 8
+      type: String,
+      required: true,
+      trim: true,
+      minlength: 8,
     },
     phoneNumber: {
-        type: String,
-        validate: {
-            validator: function (value) {
-                return /^[0-9]{10}/.test(value);
-            },
-            message: '{VALUE} is not a valid 10 digit number!'
+      type: String,
+      validate: {
+        validator: function (value) {
+          return /^[0-9]{10}/.test(value);
         },
-        required: true
+        message: "{VALUE} is not a valid 10 digit number!",
+      },
+      required: true,
     },
     roleName: {
-        type: String,
-        values: roles,
-        default: 'user',
-        required: true
+      type: String,
+      values: roles,
+      default: "user",
+      required: true,
     },
     userStatus: {
-        type: Number,
-        required: true
+      type: Number,
+      required: true,
     },
     accessTerms: {
-        type: Boolean,
-        default: 0,
-        required: true
+      type: Boolean,
+      default: 0,
+      required: true,
+    },
+    isEmailVerified: {
+      type: Boolean,
+      default: 0,
+      required: true,
+    },
+    isPhoneVerified: {
+      type: Boolean,
+      default: 0,
+      required: true,
     },
     createdBy: {
-        type: String
+      type: String,
+       default: "system",
     },
     updatedBy: {
-        type: String
-    }
-}, {
+      type: String,
+    },
+  },
+  {
     collation: "users",
-    timestamps: true
+    timestamps: true,
+  }
+);
+
+userSchema.pre("save", function (next) {
+  if (this.isNew && !this.createdBy) {
+    this.createdBy = this._updatedBy || "system";
+  }
+  next();
 });
 
-module.exports = User = Modle("users", userSchema)
+userSchema.pre("findOneAndUpdate", function (next) {
+  this._update.updatedBy = this._update._updatedBy || "system";
+  next();
+});
+
+module.exports = User = Modle("users", userSchema);
